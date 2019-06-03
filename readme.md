@@ -25,7 +25,7 @@ pip install -r requirements.txt
 
 ## Introduction
 
-This code contains the the code for line fitting with DSAC as well as all boilerplate code for circle fitting. 
+This repository contains the the code for line fitting with DSAC as well as all boilerplate code for circle fitting written by Eric Brachmann. 
 All following information aims at the already implemented line-fitting part.
 You find more detailed information about the exercise in the included ![PDF](./task.pdf).
 
