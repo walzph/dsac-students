@@ -16,8 +16,8 @@
 
 For the installation I recommend a virtualenv.
 ```sh
-git clone git@github.com:titus-leistner/dsac-exercise.git
-cd dsac-exercise/
+git clone git@github.com:titus-leistner/dsac-students.git
+cd dsac-students/
 python3 -m venv .
 source bin/activate
 pip install -r requirements.txt
