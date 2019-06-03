@@ -1,6 +1,7 @@
 # Differentiable RANSAC: Learning Robust Line Fitting
 
 - [Requirements](#requirements)
+- [Installation](#installation)
 - [Introduction](#introduction)
 - [Running the Code](#running-the-code)
 - [How Does It Work?](#how-does-it-work)
