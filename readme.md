@@ -47,7 +47,7 @@ We train the CNN end-to-end from scratch to minimize the deviation between the (
 
 ## Running the Code
 
-Just execute `python main.py` to start a training run with the standard settings. 
+Just execute `python main.py --cpu` to start a training run with the standard settings. 
 Running `python main.py -h` will list all parameter options for playing around.
 
 The code generates training data on the fly, and trains two CNNs in parallel. 
