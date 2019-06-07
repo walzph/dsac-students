@@ -158,9 +158,9 @@ class CircleDataset:
 		data = np.zeros((n, self.imgH, self.imgW, 3), dtype=np.float32)
 		data.fill(self.bg_clr)
 		labels = np.zeros((n, 3), dtype=np.float32)
-
+		
 		for i in range (0, n): # for each image
-
+		
 			# -- STUDENT BEGIN --------------------------------------------------------
 
 			# TASK 2.
@@ -181,6 +181,52 @@ class CircleDataset:
 			#	should contain x and y of the circle center, and radius of the circle in this order
 			#	the labels should be in normalized image coordinates, i.e. divided by the image size
 
+
+			# create a random number of distractor lines
+			nC = random.randint(2, 5)
+			for c in range(0, nC):
+			
+				while True:
+					# sample segment end points
+					lX1 = random.randint(self.margin, self.imgW-self.margin+1)
+					lX2 = random.randint(self.margin, self.imgW-self.margin+1)
+					lY1 = random.randint(self.margin, self.imgH-self.margin+1)
+					lY2 = random.randint(self.margin, self.imgH-self.margin+1)
+
+					# check min length
+					length = math.sqrt((lX1 - lX2) * (lX1 - lX2) + (lY1 - lY2) * (lY1 - lY2))
+					if length < minLength: continue
+
+					# random color
+					clr = (random.uniform(0, 1), random.uniform(0, 1), random.uniform(0, 1))
+
+					# calculate line ground truth parameters
+					delta = lX2 - lX1
+					if delta == 0: delta = 1 
+
+					slope = (lY2 - lY1) / delta
+					intercept = lY1 - slope * lX1
+
+					# not too steep for stability
+					if abs(slope) < maxSlope: break
+				
+				rr, cc, val = line_aa(lX1, lY1, lX2, lY2)
+				set_color(data[i], (rr, cc), clr, val)
+
+			# create circle segment
+			cR = random.randint(int(0.1 * self.imgW), int(1 * self.imgW))			
+			cX1 = random.randint(int(-0.5 * cR), int(self.imgW+0.5*cR+1))
+			cY1 = random.randint(int(-0.5 * cR), int(self.imgH+0.5*cR+1))	
+
+			clr = (random.uniform(0, 1), random.uniform(0, 1), random.uniform(0, 1))
+
+			labels[i, 0] = cX1 / self.imgW
+			labels[i, 1] = cY1 / self.imgH
+			labels[i, 2] = cR
+			
+			self.draw_circle(data[i], cX1, cY1, cR, clr)
+
+			
 			# -- STUDENT END ----------------------------------------------------------
 
 			# apply some noise on top
