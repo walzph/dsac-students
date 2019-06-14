@@ -47,7 +47,7 @@ class CircleDataset:
 		cY = int(cY * self.imgH)
 		cX = int(cX * self.imgW)
 		r = int(r * self.imgW)
-
+		print(cX, cY, r)
 		rr, cc, val =  circle_perimeter_aa(cY, cX, r)
 		set_color(data, (rr, cc), clr, val)
 
@@ -150,7 +150,7 @@ class CircleDataset:
 
 	def sample_circles(self, n):
 		'''
-		Create new input images of random line segments and distractors along with ground truth parameters.
+		Create new input images of random circle segments and distractors along with ground truth parameters.
 
 		n -- number of images to create
 		'''
@@ -213,17 +213,23 @@ class CircleDataset:
 				rr, cc, val = line_aa(lX1, lY1, lX2, lY2)
 				set_color(data[i], (rr, cc), clr, val)
 
+
 			# create circle segment
-			cR = random.randint(int(0.1 * self.imgW), int(1 * self.imgW))			
-			cX1 = random.randint(int(-0.5 * cR), int(self.imgW+0.5*cR+1))
-			cY1 = random.randint(int(-0.5 * cR), int(self.imgH+0.5*cR+1))	
+			# cR = random.randint(int(0.1 * self.imgW), int(1 * self.imgW))			
+			# cX1 = random.randint(int(-0.5 * cR), int(self.imgW+0.5*cR+1))
+			# cY1 = random.randint(int(-0.5 * cR), int(self.imgH+0.5*cR+1))	
+
+			cR = random.uniform(0, 1)			
+			cX1 = random.uniform(0, 1)
+			cY1 = random.uniform(0, 1)	
+
 
 			clr = (random.uniform(0, 1), random.uniform(0, 1), random.uniform(0, 1))
 
-			labels[i, 0] = cX1 / self.imgW
-			labels[i, 1] = cY1 / self.imgH
+			labels[i, 0] = cX1
+			labels[i, 1] = cY1
 			labels[i, 2] = cR
-			
+			print("original generated", labels[i, :])
 			self.draw_circle(data[i], cX1, cY1, cR, clr)
 
 			
