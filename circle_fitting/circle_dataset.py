@@ -47,7 +47,6 @@ class CircleDataset:
 		cY = int(cY * self.imgH)
 		cX = int(cX * self.imgW)
 		r = int(r * self.imgW)
-		print(cX, cY, r)
 		rr, cc, val =  circle_perimeter_aa(cY, cX, r)
 		set_color(data, (rr, cc), clr, val)
 
@@ -229,7 +228,6 @@ class CircleDataset:
 			labels[i, 0] = cX1
 			labels[i, 1] = cY1
 			labels[i, 2] = cR
-			print("original generated", labels[i, :])
 			self.draw_circle(data[i], cX1, cY1, cR, clr)
 
 			
