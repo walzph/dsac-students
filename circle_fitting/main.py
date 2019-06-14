@@ -114,11 +114,10 @@ def prepare_data(inputs, labels):
 def batch_loss(prediction, labels):
 	# caluclate the loss for each image in the batch
 
-	losses = torch.zeros(labels.size(0))
+	losses = torch.zeros(labels.size(0), requires_grad=True).clone()
 
 	for b in range(0, labels.size(0)):
 		losses[b] = loss(prediction[b], labels[b])
-
 	return losses
 
 # generate validation data (for consistent vizualisation only)
@@ -151,7 +150,7 @@ for iteration in range(0, opt.trainiterations+1):
 	direct_prediction = direct_nn(inputs)
 	direct_prediction = direct_prediction.cpu()
 	direct_loss = batch_loss(direct_prediction, labels).mean()
-
+	print("direct_loss", direct_loss)
 	if direct_loss > 0:
 		direct_loss.backward()			# calculate gradients (pytorch autograd)
 		opt_direct_nn.step()			# update parameters 
