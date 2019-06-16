@@ -138,7 +138,9 @@ for iteration in range(0, opt.trainiterations+1):
 
 	# robust line fitting with DSAC
 	exp_loss, top_loss = dsac(point_prediction, labels)
-	
+	exp_loss.requires_grad_(True)
+	top_loss.requires_grad_(True)
+
 	if exp_loss > 0:
 		exp_loss.backward()			# calculate gradients (pytorch autograd)
 		opt_point_nn.step()			# update parameters 

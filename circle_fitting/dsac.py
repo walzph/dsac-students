@@ -2,6 +2,7 @@ import torch
 import torch.nn.functional as F
 
 import random
+import numpy as np
 
 class DSAC:
 	'''
@@ -47,8 +48,33 @@ class DSAC:
 		# and True resp. False if no valid circle has been found within 1000 tries (radius < 1).
 
 		# -- STUDENT END ----------------------------------------------------------
+		x = x.clone().detach().numpy()
+		y = y.clone().detach().numpy()
 
-		return 0, 0, 0, False
+		centerX, centerY, radius = 0,0,0
+
+		found = False
+		for sanityCheck in range(0, 1000):
+
+			#select three random points
+			randomSlice = np.random.choice(len(x), size=3, replace=False)
+			randX = x[randomSlice]
+			randY = y[randomSlice]
+			
+			A = randX[0] * (randY[1] - randY[2]) - randY[0] * (randX[1] - randX[2]) + randX[1]*randY[2] - randX[2] * randY[1]
+			B = (randX[0] ** 2 + randY[0] ** 2) * (randY[2] - randY[1]) + (randX[1] ** 2 + randY[1] ** 2) * (randY[0] - randY[2]) + (randX[2] ** 2 + randY [2] ** 2) * (randY[1] - randY[0])
+			C = (randX[0] ** 2 + randY[0] ** 2) * (randX[1] - randX[2]) + (randX[1] ** 2 + randY[1] ** 2) * (randX[2] - randX[0]) + (randX[2] ** 2 + randY [2] ** 2) * (randX[0] - randX[1])
+			D = (randX[0] ** 2 + randY[0] ** 2) * (randX[2]*randY[1] - randX[1]*randY[2]) + (randX[1] ** 2 + randY[1] ** 2) * (randX[0]*randY[2] - randX[2]* randY[0]) + (randX[2] ** 2 + randY [2] ** 2) * (randX[1]*randY[0] - randX[0]*randY[1])
+			centerX = - B / (2 * A)
+			centerY = - C / (2 * A)
+			radius = np.sqrt( ((B**2) + (C**2) - 4*A*D) / 4 * (A**2))
+
+			#sanity check
+			if radius < 1.0:
+				found = True
+				break
+		return centerX, centerY, radius, found
+		#return 0,0,0,True
 
 	def __soft_inlier_count(self, cX, cY, r, x, y):
 		'''
@@ -187,5 +213,4 @@ class DSAC:
 
 			# loss of best hypothesis (for evaluation)
 			avg_top_loss = avg_top_loss + self.est_losses[b]
-
 		return avg_exp_loss / batch_size, avg_top_loss / batch_size
