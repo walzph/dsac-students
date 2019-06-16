@@ -152,7 +152,7 @@ for iteration in range(0, opt.trainiterations+1):
 	direct_prediction = direct_nn(inputs)
 	direct_prediction = direct_prediction.cpu()
 	direct_loss = batch_loss(direct_prediction, labels).mean()
-	print("direct_loss", direct_loss)
+	#print("direct_loss", direct_loss)
 	if direct_loss > 0:
 		direct_loss.backward()			# calculate gradients (pytorch autograd)
 		opt_direct_nn.step()			# update parameters 
