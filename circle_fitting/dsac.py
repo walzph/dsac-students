@@ -3,6 +3,7 @@ import torch.nn.functional as F
 
 import random
 import numpy as np
+import math
 
 class DSAC:
 	'''
@@ -102,7 +103,6 @@ class DSAC:
 		# and a vector with the soft inlier score of each point.
 
 		# -- STUDENT END ----------------------------------------------------------
-
 		dist = torch.abs(torch.sqrt( (x - cX)**2 + (y - cY)**2  + 0.0000001 ) - r)
 		inlinerCount = torch.nonzero(torch.where(dist < self.inlier_thresh, dist, torch.zeros(dist.shape))).size()[0]
 
@@ -133,7 +133,55 @@ class DSAC:
 
 		# -- STUDENT END ----------------------------------------------------------
 
-		return 0, 0, 0
+		#least square with all points > 0.5
+		weightsNP = weights.detach().numpy()
+		indices = np.argwhere(weightsNP > 0.5)
+
+		xNP = x.detach().numpy()
+		xSub = xNP[indices]
+
+		yNP = y.detach().numpy()
+		ySub = yNP[indices]
+
+		if xSub.shape[0] == 0 or ySub.shape[0] == 0:
+			return 0,0,0
+
+		xMean = xSub.mean()
+		yMean = ySub.mean()
+		#print("mean", xMean, yMean)
+		u = xSub - xMean
+		v = ySub - yMean
+
+		N = u.shape[0]
+
+		#calc S for Eq. 3 and 4
+		Suu = np.sum(np.multiply(u,u))
+		Suuu = np.sum(np.multiply(np.multiply(u,u),u))
+		Suv = np.sum(np.multiply(u,v))
+		Suvv = np.sum(np.multiply(np.multiply(u,v),v))
+		Svuu = np.sum(np.multiply(np.multiply(v,u),u))
+		Svv = np.sum(np.multiply(v,v))
+		Svvv = np.sum(np.multiply(np.multiply(v,v),v))
+		
+		#print(Suu, Suv, Svv, Suuu, Svvv, Suvv, Svuu)
+
+		#Equation solving
+		leftSide = np.array([[Suu, Suv], [Suv, Svv]])
+		rightSide = np.array([0.5 * (Suuu + Suvv), 0.5* (Svvv + Svuu)])
+		#print("left, right", leftSide, rightSide)
+
+		try:
+			solution = np.linalg.solve(leftSide, rightSide)
+		except:
+			return 0,0,0
+		#print("u,v", solution)
+		centerX = solution[0] + xMean
+		centerY = solution[1] + yMean
+		
+		#Eq 6
+		radius =  np.sqrt(solution[0]**2 + solution[1]**2 + (Suu + Svv) / N + 0.000001)
+
+		return centerX, centerY, radius
 		
 
 	def __call__(self, prediction, labels):
@@ -213,6 +261,7 @@ class DSAC:
 
 			# expectation of loss
 			exp_loss = torch.sum(hyp_losses * hyp_scores)
+			#print(exp_loss, hyp_losses, hyp_scores)
 			avg_exp_loss = avg_exp_loss + exp_loss
 
 			# loss of best hypothesis (for evaluation)
