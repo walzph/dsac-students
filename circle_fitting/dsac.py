@@ -74,7 +74,6 @@ class DSAC:
 				found = True
 				break
 		return centerX, centerY, radius, found
-		#return 0,0,0,True
 
 	def __soft_inlier_count(self, cX, cY, r, x, y):
 		'''
@@ -104,7 +103,12 @@ class DSAC:
 
 		# -- STUDENT END ----------------------------------------------------------
 
-		return 0, torch.zeros(x.size())
+		dist = torch.abs(torch.sqrt( (x - cX)**2 + (y - cY)**2  + 0.0000001 ) - r)
+		inlinerCount = torch.nonzero(torch.where(dist < self.inlier_thresh, dist, torch.zeros(dist.shape))).size()[0]
+
+		dist = 1 - torch.sigmoid(self.inlier_beta * (dist - self.inlier_thresh)) 
+
+		return inlinerCount, dist
 
 	def __refine_hyp(self, x, y, weights):
 		'''

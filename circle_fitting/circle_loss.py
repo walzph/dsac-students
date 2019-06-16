@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 
 class CircleLoss:
 	'''
@@ -35,9 +36,9 @@ class CircleLoss:
 		# You should return one value: the loss.
 
 		# -- STUDENT END ----------------------------------------------------------
-		est = est.clone() * self.image_size
-		gt = gt.clone() * self.image_size 
+		est = est.clone() #* self.image_size
+		gt = gt.clone() #* self.image_size 
 
-		loss = (( est[0].item() - gt[0].item() ) ** 2 ) + (( est[1].item() - gt[1].item() ) ** 2 ) + ( est[2].item() - gt[2].item() ) #euclidean distance + raduis distance
+		loss = np.sqrt((( est[0].item() - gt[0].item() ) ** 2 ) + (( est[1].item() - gt[1].item() ) ** 2 )) + np.abs(( est[2].item() - gt[2].item())) #euclidean distance + raduis distance
 
-		return loss
+		return loss * self.image_size
