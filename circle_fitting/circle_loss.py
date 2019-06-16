@@ -39,6 +39,6 @@ class CircleLoss:
 		est = est.clone() #* self.image_size
 		gt = gt.clone() #* self.image_size 
 
-		loss = np.sqrt((( est[0].item() - gt[0].item() ) ** 2 ) + (( est[1].item() - gt[1].item() ) ** 2 )) + np.abs(( est[2].item() - gt[2].item())) #euclidean distance + raduis distance
+		loss = np.sqrt((( est[0].item() - gt[0].item() ) ** 2 ) + (( est[1].item() - gt[1].item() ) ** 2 ) + 0.000001) + np.abs(( est[2].item() - gt[2].item())) #euclidean distance + raduis distance
 
 		return loss * self.image_size
