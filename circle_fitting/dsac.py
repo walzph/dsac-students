@@ -27,6 +27,42 @@ class DSAC:
 		self.inlier_alpha = inlier_alpha
 		self.loss_function = loss_function
 
+	def define_circle(self, p1, p2, p3):
+		"""
+		Returns the center and radius of the circle passing the given 3 points.
+		"""
+		a = torch.det(torch.tensor([
+			[p1[0], p1[1], 1],
+			[p2[0], p2[1], 1],
+			[p3[0], p3[1], 1]
+		]))
+		b = torch.det(-torch.tensor([
+			[p1[0] ** 2 + p1[1] ** 2, p1[1], 1],
+			[p2[0] ** 2 + p2[1] ** 2, p2[1], 1],
+			[p3[0] ** 2 + p3[1] ** 2, p3[1], 1]
+		]))
+		c = torch.det(torch.tensor([
+			[p1[0] ** 2 + p1[1] ** 2, p1[0], 1],
+			[p2[0] ** 2 + p2[1] ** 2, p2[0], 1],
+			[p3[0] ** 2 + p3[1] ** 2, p3[0], 1]
+		]))
+		d = torch.det(-torch.tensor([
+			[p1[0] ** 2 + p1[1] ** 2, p1[0], p1[1]],
+			[p2[0] ** 2 + p2[1] ** 2, p2[0], p2[1]],
+			[p3[0] ** 2 + p3[1] ** 2, p3[0], p3[1]]
+		]))
+
+		""" if torch.abs(a) < 1.0e-6 or torch.abs(b) < 1.0e-6 or torch.abs(c) < 1.0e-6 or torch.abs(d) < 1.0e-6:
+			return None, None, None """
+
+		# Center of circle
+		cx = -b / (2 * a)
+		cy = -c / (2 * a)
+
+		radius = torch.sqrt((b ** 2 + c ** 2 - 4 * a * d) / (4 * a ** 2) + 0.00001)
+		return cx, cy, radius
+
+
 	def __sample_hyp(self, x, y):
 		'''
 		Calculate a circle hypothesis (cX, cY, r) from three random points.
@@ -62,6 +98,7 @@ class DSAC:
 			randX = x[randomSlice]
 			randY = y[randomSlice]
 			
+			""" 
 			A = randX[0] * (randY[1] - randY[2]) - randY[0] * (randX[1] - randX[2]) + randX[1]*randY[2] - randX[2] * randY[1]
 			B = (randX[0] ** 2 + randY[0] ** 2) * (randY[2] - randY[1]) + (randX[1] ** 2 + randY[1] ** 2) * (randY[0] - randY[2]) + (randX[2] ** 2 + randY [2] ** 2) * (randY[1] - randY[0])
 			C = (randX[0] ** 2 + randY[0] ** 2) * (randX[1] - randX[2]) + (randX[1] ** 2 + randY[1] ** 2) * (randX[2] - randX[0]) + (randX[2] ** 2 + randY [2] ** 2) * (randX[0] - randX[1])
@@ -69,6 +106,8 @@ class DSAC:
 			centerX = - B / (2 * A)
 			centerY = - C / (2 * A)
 			radius = np.sqrt( ((B**2) + (C**2) - 4*A*D) / 4 * (A**2))
+ 			"""
+			centerX, centerY, radius = self.define_circle(torch.tensor([randX[0], randY[0]]), torch.tensor([randX[1], randY[1]]), torch.tensor([randX[2], randY[2]]))
 
 			#sanity check
 			if radius < 1.0:
@@ -104,11 +143,12 @@ class DSAC:
 
 		# -- STUDENT END ----------------------------------------------------------
 		dist = torch.abs(torch.sqrt( (x - cX)**2 + (y - cY)**2  + 0.0000001 ) - r)
-		inlinerCount = torch.nonzero(torch.where(dist < self.inlier_thresh, dist, torch.zeros(dist.shape))).size()[0]
+		#inlinerCount = torch.nonzero(torch.where(dist < self.inlier_thresh, dist, torch.zeros(dist.shape))).size()[0]
 
 		dist = 1 - torch.sigmoid(self.inlier_beta * (dist - self.inlier_thresh)) 
+		score = torch.sum(dist)
 
-		return inlinerCount, dist
+		return score, dist
 
 	def __refine_hyp(self, x, y, weights):
 		'''
@@ -134,20 +174,14 @@ class DSAC:
 		# -- STUDENT END ----------------------------------------------------------
 
 		#least square with all points > 0.5
-		weightsNP = weights.detach().numpy()
-		indices = np.argwhere(weightsNP > 0.5)
-
-		xNP = x.detach().numpy()
-		xSub = xNP[indices]
-
-		yNP = y.detach().numpy()
-		ySub = yNP[indices]
+		xSub = x[weights > 0.5]
+		ySub = y[weights > 0.5]
 
 		if xSub.shape[0] == 0 or ySub.shape[0] == 0:
 			return 0,0,0
 
-		xMean = xSub.mean()
-		yMean = ySub.mean()
+		xMean = torch.mean(xSub)
+		yMean = torch.mean(ySub)
 		#print("mean", xMean, yMean)
 		u = xSub - xMean
 		v = ySub - yMean
@@ -155,13 +189,13 @@ class DSAC:
 		N = u.shape[0]
 
 		#calc S for Eq. 3 and 4
-		Suu = np.sum(np.multiply(u,u))
-		Suuu = np.sum(np.multiply(np.multiply(u,u),u))
-		Suv = np.sum(np.multiply(u,v))
-		Suvv = np.sum(np.multiply(np.multiply(u,v),v))
-		Svuu = np.sum(np.multiply(np.multiply(v,u),u))
-		Svv = np.sum(np.multiply(v,v))
-		Svvv = np.sum(np.multiply(np.multiply(v,v),v))
+		Suu = torch.sum(u * u)
+		Suv = torch.sum(u * v)
+		Svv = torch.sum(v * v)
+		Suuu = torch.sum(u * u * u)
+		Svvv = torch.sum(v * v * v)
+		Suvv = torch.sum(u * v * v)
+		Svuu = torch.sum(v * u * u)
 		
 		#print(Suu, Suv, Svv, Suuu, Svvv, Suvv, Svuu)
 

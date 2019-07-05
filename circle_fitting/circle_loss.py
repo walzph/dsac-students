@@ -36,9 +36,6 @@ class CircleLoss:
 		# You should return one value: the loss.
 
 		# -- STUDENT END ----------------------------------------------------------
-		est = est.clone() #* self.image_size
-		gt = gt.clone() #* self.image_size 
-
-		loss = np.sqrt((( est[0].item() - gt[0].item() ) ** 2 ) + (( est[1].item() - gt[1].item() ) ** 2 ) + 0.000001) + np.abs(( est[2].item() - gt[2].item())) #euclidean distance + raduis distance
-
-		return loss * self.image_size
+		dist_circle_center = torch.dist(torch.tensor([est[0], est[1]]), torch.tensor([gt[0], gt[1]]), p=2) * self.image_size
+		diff_radii = torch.abs(gt[2] - est[2]) * self.image_size
+		return dist_circle_center + diff_radii

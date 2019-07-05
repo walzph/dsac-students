@@ -114,7 +114,7 @@ def prepare_data(inputs, labels):
 def batch_loss(prediction, labels):
 	# caluclate the loss for each image in the batch
 
-	losses = torch.zeros(labels.size(0), requires_grad=True).clone()
+	losses = torch.zeros(labels.size(0))
 
 	for b in range(0, labels.size(0)):
 		losses[b] = loss(prediction[b], labels[b])
@@ -138,8 +138,6 @@ for iteration in range(0, opt.trainiterations+1):
 
 	# robust line fitting with DSAC
 	exp_loss, top_loss = dsac(point_prediction, labels)
-	exp_loss.requires_grad_(True)
-	top_loss.requires_grad_(True)
 
 	if exp_loss > 0:
 		exp_loss.backward()			# calculate gradients (pytorch autograd)
@@ -152,7 +150,7 @@ for iteration in range(0, opt.trainiterations+1):
 	direct_prediction = direct_nn(inputs)
 	direct_prediction = direct_prediction.cpu()
 	direct_loss = batch_loss(direct_prediction, labels).mean()
-	#print("direct_loss", direct_loss)
+
 	if direct_loss > 0:
 		direct_loss.backward()			# calculate gradients (pytorch autograd)
 		opt_direct_nn.step()			# update parameters 
